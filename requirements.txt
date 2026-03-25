@@ -1,3 +1,5 @@
 pyTelegramBotAPI
 schedule
 pytz
+requests
+flask
