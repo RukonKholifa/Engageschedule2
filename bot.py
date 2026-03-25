@@ -7,13 +7,23 @@ from flask import Flask
 from datetime import datetime, timedelta
 import pytz
 
+# ================== CONFIG ==================
 TOKEN = '8651930798:AAH9777sWQpkj7z3dHyFpC0M6hyme7GbjPk'
 GROUP_CHAT_ID = '-1003702085290'
-MENTIONS = "@Rukon_kholifa @TouFiqVH @RDX_NARUTO @Didarul_Habib96 @Sure_Ahmmed"
 
+MENTIONS = (
+    '<a href="tg://user?id=5542815933">Rukon</a> '
+    '<a href="tg://user?id=665980342">TouFiq</a> '
+    '<a href="tg://user?id=6364786244">Naruto</a> '
+    '<a href="tg://user?id=6291029584">Didarul</a> '
+    '<a href="tg://user?id=7510435738">Sure Ahmed</a>'
+)
+
+# ================== BOT SETUP ==================
 bot = telebot.TeleBot(TOKEN)
 bdt = pytz.timezone('Asia/Dhaka')
 
+# ================== SESSIONS ==================
 sessions = [
     {
         "gc": "Hidden Mafia",
@@ -34,6 +44,7 @@ sessions = [
 
 sent_alerts = set()
 
+# ================== SERVER ==================
 app = Flask(name)
 
 @app.route('/')
@@ -51,6 +62,7 @@ def keep_alive():
             pass
         time.sleep(300)
 
+# ================== ALERT SYSTEM ==================
 def check_and_alert():
     global sent_alerts
     try:
@@ -73,20 +85,24 @@ def check_and_alert():
                     bot.send_message(
                         GROUP_CHAT_ID,
                         msg,
+                        parse_mode="HTML",
                         disable_web_page_preview=True
                     )
 
                     sent_alerts.add(alert_id)
                     print(f"Sent reminder for {item['gc']} at {t}")
 
+        # Daily reset
         if current_minute == "00:00":
             sent_alerts.clear()
 
     except Exception as e:
         print(f"Error: {e}")
 
+# ================== SCHEDULER ==================
 schedule.every(30).seconds.do(check_and_alert)
 
+# ================== MAIN ==================
 if name == "main":
     threading.Thread(target=run_server).start()
     threading.Thread(target=keep_alive).start()
