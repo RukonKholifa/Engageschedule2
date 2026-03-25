@@ -22,21 +22,9 @@ bot = telebot.TeleBot(TOKEN)
 bdt = pytz.timezone('Asia/Dhaka')
 
 sessions = [
-    {
-        "gc": "Hidden Mafia",
-        "link": "https://t.me/c/3521163148/83",
-        "times": ["13:00", "05:00", "20:00", "01:00"]
-    },
-    {
-        "gc": "SilentAlpha",
-        "link": "https://t.me/SilentAlphaGroup",
-        "times": ["11:00", "14:00", "17:00", "20:00", "23:00"]
-    },
-    {
-        "gc": "Spherical HUB",
-        "link": "https://t.me/+juerAsiSRNk4MjVk",
-        "times": ["13:00", "17:00", "21:00", "01:00"]
-    }
+    {"gc": "Hidden Mafia", "link": "https://t.me/c/3521163148/83", "times": ["13:00", "05:00", "20:00", "01:00"]},
+    {"gc": "SilentAlpha", "link": "https://t.me/SilentAlphaGroup", "times": ["11:00", "14:00", "17:00", "20:00", "23:00"]},
+    {"gc": "Spherical HUB", "link": "https://t.me/+juerAsiSRNk4MjVk", "times": ["13:00", "17:00", "21:00", "01:00"]}
 ]
 
 sent_alerts = set()
@@ -45,7 +33,7 @@ app = Flask(name)
 
 @app.route('/')
 def home():
-    return "GC Alert Bot Live!"
+    return "Bot Running"
 
 def run_server():
     app.run(host='0.0.0.0', port=8080)
@@ -54,46 +42,47 @@ def keep_alive():
     while True:
         try:
             requests.get("https://engageschedule2-2.onrender.com", timeout=10)
-        except Exception as e:
-            print(f"Keep-alive error: {e}")
+        except:
+            pass
         time.sleep(300)
 
 def check_and_alert():
     global sent_alerts
 
-    try:
-        now = datetime.now(bdt)
-        current_minute = now.strftime("%H:%M")
-        target_time = (now + timedelta(minutes=5)).strftime("%H:%M")
+    now = datetime.now(bdt)
+    current_minute = now.strftime("%H:%M")
+    target_time = (now + timedelta(minutes=5)).strftime("%H:%M")
 
-        for item in sessions:
-            for session_time in item["times"]:
-                alert_id = f"{item['gc']}_{session_time}_{current_minute}"
+    active_sessions = []
 
-                if session_time == target_time and alert_id not in sent_alerts:
-                    msg = (
-                        f"⚡️ ৫ মিনিট বাকি!\n\n"
-                        f"📌 GC Name: {item['gc']}\n"
-                        f"🔗 Link: {item['link']}\n\n"
-                        f"{MENTIONS}"
-                    )
+    for item in sessions:
+        for t in item["times"]:
+            if t == target_time:
+                active_sessions.append(item)
 
-                    bot.send_message(
-                        GROUP_CHAT_ID,
-                        msg,
-                        parse_mode="HTML",
-                        disable_web_page_preview=True
-                    )
+    if active_sessions:
+        alert_id = f"{target_time}_{current_minute}"
 
-                    sent_alerts.add(alert_id)
-                    print(f"Sent reminder for {item['gc']} at {session_time}")
+        if alert_id not in sent_alerts:
+            msg = "⚡️ ৫ মিনিট বাকি!\n\n"
 
-        if current_minute == "00:00":
-            sent_alerts.clear()
-            print("sent_alerts cleared")
+            for s in active_sessions:
+                msg += f"📌 {s['gc']}\n🔗 {s['link']}\n\n"
 
-    except Exception as e:
-        print(f"Alert error: {e}")
+            msg += MENTIONS
+
+            bot.send_message(
+                GROUP_CHAT_ID,
+                msg,
+                parse_mode="HTML",
+                disable_web_page_preview=True
+            )
+
+            sent_alerts.add(alert_id)
+            print("Combined alert sent")
+
+    if current_minute == "00:00":
+        sent_alerts.clear()
 
 schedule.every(30).seconds.do(check_and_alert)
 
