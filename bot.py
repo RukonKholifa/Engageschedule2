@@ -7,8 +7,7 @@ from flask import Flask
 from datetime import datetime, timedelta
 import pytz
 
-# ================== CONFIG ==================
-TOKEN = '8651930798:AAH9777sWQpkj7z3dHyFpC0M6hyme7GbjPk'
+TOKEN = '8651930798:AAE28w-UGL9ONuBsS0mdgW31KKC3smfLDyw'
 GROUP_CHAT_ID = '-1003702085290'
 
 MENTIONS = (
@@ -19,11 +18,9 @@ MENTIONS = (
     '<a href="tg://user?id=7510435738">Sure Ahmed</a>'
 )
 
-# ================== BOT SETUP ==================
 bot = telebot.TeleBot(TOKEN)
 bdt = pytz.timezone('Asia/Dhaka')
 
-# ================== SESSIONS ==================
 sessions = [
     {
         "gc": "Hidden Mafia",
@@ -44,7 +41,6 @@ sessions = [
 
 sent_alerts = set()
 
-# ================== SERVER ==================
 app = Flask(name)
 
 @app.route('/')
@@ -57,24 +53,24 @@ def run_server():
 def keep_alive():
     while True:
         try:
-            requests.get("https://engageschedule2-1.onrender.com", timeout=10)
-        except:
-            pass
+            requests.get("https://engageschedule2-2.onrender.com", timeout=10)
+        except Exception as e:
+            print(f"Keep-alive error: {e}")
         time.sleep(300)
 
-# ================== ALERT SYSTEM ==================
 def check_and_alert():
     global sent_alerts
+
     try:
         now = datetime.now(bdt)
         current_minute = now.strftime("%H:%M")
         target_time = (now + timedelta(minutes=5)).strftime("%H:%M")
 
         for item in sessions:
-            for t in item["times"]:
-                alert_id = f"{item['gc']}_{t}_{current_minute}"
+            for session_time in item["times"]:
+                alert_id = f"{item['gc']}_{session_time}_{current_minute}"
 
-                if t == target_time and alert_id not in sent_alerts:
+                if session_time == target_time and alert_id not in sent_alerts:
                     msg = (
                         f"⚡️ ৫ মিনিট বাকি!\n\n"
                         f"📌 GC Name: {item['gc']}\n"
@@ -90,19 +86,17 @@ def check_and_alert():
                     )
 
                     sent_alerts.add(alert_id)
-                    print(f"Sent reminder for {item['gc']} at {t}")
+                    print(f"Sent reminder for {item['gc']} at {session_time}")
 
-        # Daily reset
         if current_minute == "00:00":
             sent_alerts.clear()
+            print("sent_alerts cleared")
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Alert error: {e}")
 
-# ================== SCHEDULER ==================
 schedule.every(30).seconds.do(check_and_alert)
 
-# ================== MAIN ==================
 if name == "main":
     threading.Thread(target=run_server).start()
     threading.Thread(target=keep_alive).start()
