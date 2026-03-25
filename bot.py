@@ -29,7 +29,7 @@ sessions = [
 
 sent_alerts = set()
 
-app = Flask(name)
+app = Flask(__name__) # এখানে ভুল ছিল, __name__ হবে
 
 @app.route('/')
 def home():
@@ -86,7 +86,7 @@ def check_and_alert():
 
 schedule.every(30).seconds.do(check_and_alert)
 
-if name == "main":
+if __name__ == "__main__": # এখানেও ভুল ছিল, __name__ এবং "__main__" হবে
     threading.Thread(target=run_server).start()
     threading.Thread(target=keep_alive).start()
 
