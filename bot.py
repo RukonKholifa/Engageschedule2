@@ -3,6 +3,7 @@ import schedule
 import time
 import requests
 import threading
+import os
 from flask import Flask
 from datetime import datetime, timedelta
 import pytz
@@ -29,67 +30,73 @@ sessions = [
 
 sent_alerts = set()
 
-app = Flask(__name__) # এখানে ভুল ছিল, __name__ হবে
+app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Bot Running"
+    return "Bot is awake and running!"
 
 def run_server():
-    app.run(host='0.0.0.0', port=8080)
+    # Render er standard port variable use kora safe
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
 
 def keep_alive():
     while True:
         try:
-            requests.get("https://engageschedule2-2.onrender.com", timeout=10)
+            # Nijei nijeke ping kora jate server sleep-e na jay
+            requests.get("https://engageschedule2-2.onrender.com", timeout=15)
         except:
             pass
-        time.sleep(300)
+        time.sleep(180) # 3 minute por por ping
 
 def check_and_alert():
     global sent_alerts
 
-    now = datetime.now(bdt)
-    current_minute = now.strftime("%H:%M")
-    target_time = (now + timedelta(minutes=5)).strftime("%H:%M")
+    # UTC theke perfect BDT timezone ensure kora
+    now = datetime.now(pytz.utc).astimezone(bdt)
+    current_time_str = now.strftime("%H:%M")
+    
+    # Target time calculate kora (5 minute porer jonno)
+    target_dt = now + timedelta(minutes=5)
+    target_time = target_dt.strftime("%H:%M")
 
-    active_sessions = []
-
-    for item in sessions:
-        for t in item["times"]:
-            if t == target_time:
-                active_sessions.append(item)
+    active_sessions = [s for s in sessions if target_time in s["times"]]
 
     if active_sessions:
-        alert_id = f"{target_time}_{current_minute}"
+        # Unique ID with Date (jate protidin eki somoy alert dite pare)
+        alert_id = f"{target_time}_{now.strftime('%Y%m%d')}"
 
         if alert_id not in sent_alerts:
             msg = "⚡️ ৫ মিনিট বাকি!\n\n"
-
             for s in active_sessions:
                 msg += f"📌 {s['gc']}\n🔗 {s['link']}\n\n"
-
             msg += MENTIONS
 
-            bot.send_message(
-                GROUP_CHAT_ID,
-                msg,
-                parse_mode="HTML",
-                disable_web_page_preview=True
-            )
+            try:
+                bot.send_message(
+                    GROUP_CHAT_ID,
+                    msg,
+                    parse_mode="HTML",
+                    disable_web_page_preview=True
+                )
+                sent_alerts.add(alert_id)
+                print(f"[{current_time_str}] Alert sent for {target_time}")
+            except Exception as e:
+                print(f"Error: {e}")
 
-            sent_alerts.add(alert_id)
-            print("Combined alert sent")
-
-    if current_minute == "00:00":
+    # Purano alert clear kora jate memory jam na hoy
+    if len(sent_alerts) > 50:
         sent_alerts.clear()
 
-schedule.every(30).seconds.do(check_and_alert)
+# Protir 20 second por por check kora
+schedule.every(20).seconds.do(check_and_alert)
 
-if __name__ == "__main__": # এখানেও ভুল ছিল, __name__ এবং "__main__" হবে
-    threading.Thread(target=run_server).start()
-    threading.Thread(target=keep_alive).start()
+if __name__ == "__main__":
+    threading.Thread(target=run_server, daemon=True).start()
+    threading.Thread(target=keep_alive, daemon=True).start()
 
+    print("Bot started...")
     while True:
         schedule.run_pending()
-        time.sleep(5)
+        time.sleep(1)
