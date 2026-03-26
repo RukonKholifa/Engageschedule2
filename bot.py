@@ -22,7 +22,7 @@ bot = telebot.TeleBot(TOKEN)
 bdt = pytz.timezone('Asia/Dhaka')
 
 sessions = [
-    {"gc": "Hidden Mafia", "link": "https://t.me/c/3521163148/83", "times": ["13:00", "05:00", "20:00", "01:00"]},
+    {"gc": "Hidden Mafia", "link": "https://t.me/c/3521163148/83", "times": ["13:00", "16:00", "20:00", "01:00"]},
     {"gc": "SilentAlpha", "link": "https://t.me/SilentAlphaGroup", "times": ["11:00", "14:00", "17:00", "20:00", "23:00"]},
     {"gc": "Spherical HUB", "link": "https://t.me/+juerAsiSRNk4MjVk", "times": ["13:00", "17:00", "21:00", "01:00"]}
 ]
