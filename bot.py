@@ -13,9 +13,9 @@ GROUP_CHAT_ID = '-1003702085290'
 MENTIONS = (
     '<a href="tg://user?id=5542815933">Rukon</a> '
     '<a href="tg://user?id=665980342">TouFiq</a> '
-    '<a href="tg://user?id=6364786244">Naruto</a> '
+    '<a href="tg://user?id=6364786244">Nabil</a> '
     '<a href="tg://user?id=6291029584">Didarul</a> '
-    '<a href="tg://user?id=7510435738">Sure Ahmed</a>'
+    '<a href="tg://user?id=7510435738">Rifat</a>'
 )
 
 bot = telebot.TeleBot(TOKEN)
