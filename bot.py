@@ -8,8 +8,11 @@ from flask import Flask
 from datetime import datetime, timedelta
 import pytz
 
+# --- Configuration ---
 TOKEN = '8651930798:AAE28w-UGL9ONuBsS0mdgW31KKC3smfLDyw'
 GROUP_CHAT_ID = '-1003702085290'
+# Tomar Render URL ekhane thik thakle thakuk, na thakle update koro
+RENDER_URL = "https://engageschedule2-2.onrender.com" 
 
 MENTIONS = (
     '<a href="tg://user?id=5542815933">Rukon</a> '
@@ -22,6 +25,7 @@ MENTIONS = (
 bot = telebot.TeleBot(TOKEN)
 bdt = pytz.timezone('Asia/Dhaka')
 
+# --- Sessions ---
 sessions = [
     {"gc": "Hidden Mafia", "link": "https://t.me/c/3521163148/83", "times": ["13:00", "16:00", "20:00", "01:00"]},
     {"gc": "SilentAlpha", "link": "https://t.me/SilentAlphaGroup", "times": ["11:00", "14:00", "17:00", "20:00", "23:00"]},
@@ -29,49 +33,50 @@ sessions = [
 ]
 
 sent_alerts = set()
-
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Bot is awake and running!"
+    return "Bot is alive and watching the clock!"
 
 def run_server():
-    # Render er standard port variable use kora safe
+    # Render environment variable theke port neya
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
 def keep_alive():
     while True:
         try:
-            # Nijei nijeke ping kora jate server sleep-e na jay
-            requests.get("https://engageschedule2-2.onrender.com", timeout=15)
-        except:
-            pass
-        time.sleep(180) # 3 minute por por ping
+            # Server ke awake rakhar jonno 3 minute por por ping
+            requests.get(RENDER_URL, timeout=15)
+            print("Pinged server to keep it awake.")
+        except Exception as e:
+            print(f"Keep-alive ping failed: {e}")
+        time.sleep(180) 
 
 def check_and_alert():
     global sent_alerts
 
-    # UTC theke perfect BDT timezone ensure kora
-    now = datetime.now(pytz.utc).astimezone(bdt)
-    current_time_str = now.strftime("%H:%M")
+    # Server-er system time ja-i houk, eta ke UTC dore BDT-te convert kora
+    now_utc = datetime.now(pytz.utc)
+    now_bdt = now_utc.astimezone(bdt)
     
-    # Target time calculate kora (5 minute porer jonno)
-    target_dt = now + timedelta(minutes=5)
+    # Session start hobar thik 5 minute ager time check kora
+    target_dt = now_bdt + timedelta(minutes=5)
     target_time = target_dt.strftime("%H:%M")
 
     active_sessions = [s for s in sessions if target_time in s["times"]]
 
     if active_sessions:
-        # Unique ID with Date (jate protidin eki somoy alert dite pare)
-        alert_id = f"{target_time}_{now.strftime('%Y%m%d')}"
+        # Unique ID with Date (Date thakle protidin ek-i time-e alert jabe)
+        alert_id = f"{target_time}_{now_bdt.strftime('%Y%m%d')}"
 
         if alert_id not in sent_alerts:
-            msg = "⚡️ ৫ মিনিট বাকি!\n\n"
+            msg = "⚡️ <b>৫ মিনিট বাকি!</b>\n\n"
             for s in active_sessions:
-                msg += f"📌 {s['gc']}\n🔗 {s['link']}\n\n"
-            msg += MENTIONS
+                msg += f"📌 <b>{s['gc']}</b>\n🔗 {s['link']}\n\n"
+            
+            msg += f"👥 {MENTIONS}"
 
             try:
                 bot.send_message(
@@ -81,22 +86,23 @@ def check_and_alert():
                     disable_web_page_preview=True
                 )
                 sent_alerts.add(alert_id)
-                print(f"[{current_time_str}] Alert sent for {target_time}")
+                print(f"[{now_bdt.strftime('%H:%M')}] Alert sent for {target_time}")
             except Exception as e:
-                print(f"Error: {e}")
+                print(f"Telegram error: {e}")
 
-    # Purano alert clear kora jate memory jam na hoy
+    # Memory clean up (50 tar beshi purano alert tracker delete kora)
     if len(sent_alerts) > 50:
         sent_alerts.clear()
 
-# Protir 20 second por por check kora
+# 20 second por por check kora safe
 schedule.every(20).seconds.do(check_and_alert)
 
 if __name__ == "__main__":
+    # Flask and Ping logic threads-e start kora
     threading.Thread(target=run_server, daemon=True).start()
     threading.Thread(target=keep_alive, daemon=True).start()
 
-    print("Bot started...")
+    print("Bot is starting and monitoring sessions...")
     while True:
         schedule.run_pending()
         time.sleep(1)
