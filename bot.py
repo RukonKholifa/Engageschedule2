@@ -62,7 +62,7 @@ def check_and_alert():
     now_bdt = now_utc.astimezone(bdt)
     
     # Session start hobar thik 5 minute ager time check kora
-    target_dt = now_bdt + timedelta(minutes=5)
+    target_dt = now_bdt + timedelta(minutes=10)
     target_time = target_dt.strftime("%H:%M")
 
     active_sessions = [s for s in sessions if target_time in s["times"]]
