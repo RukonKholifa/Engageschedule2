@@ -72,7 +72,7 @@ def check_and_alert():
         alert_id = f"{target_time}_{now_bdt.strftime('%Y%m%d')}"
 
         if alert_id not in sent_alerts:
-            msg = "⚡️ <b>৫ মিনিট বাকি!</b>\n\n"
+            msg = "⚡️ <b>10 মিনিট বাকি!</b>\n\n"
             for s in active_sessions:
                 msg += f"📌 <b>{s['gc']}</b>\n🔗 {s['link']}\n\n"
             
